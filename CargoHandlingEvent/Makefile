@@ -12,11 +12,13 @@ env = export PYTHONPATH="$(main):$(nahash)";
 test:
 	$(env) python3 -m unittest discover -p '*_test.py' -s ./test/
 
+sam: build/$(service).yaml
+
 build/$(service).yaml: $(archives) $(nahash)/samgen
 #Do not understand why I need to copy it here
 	$(env) ../nahash/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
 
-deploy: build/$(service).yaml
+deploy: sam
 	aws s3 sync ./dist/ $(bucket)
 	aws cloudformation deploy \
 	--template-file build/$(service).yaml \
@@ -24,6 +26,7 @@ deploy: build/$(service).yaml
 	--capabilities CAPABILITY_IAM
 
 ./dist/%.zip: ./main/%.py $(common)
+	mkdir -p dist
 	mkdir -p build
 	rm -f build/*
 	cp $< $(common) build/
