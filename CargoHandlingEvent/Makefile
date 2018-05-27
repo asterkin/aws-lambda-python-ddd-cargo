@@ -1,10 +1,10 @@
-all: test deploy
+all: deploy
 
 service = $(shell basename `pwd`)
 bucket = s3://$(shell echo $(service) | tr '[:upper:]' '[:lower:]')
-functions := $(patsubst ./main/%.py, %, $(filter-out ./main/common.py, $(wildcard ./main/*.py)))
+functions := $(patsubst ./main/%.py, %, $(filter-out ./main/$(service).py, $(wildcard ./main/*.py)))
 archives := $(patsubst %, ./dist/%.zip, $(functions))
-common = ./main/common.py ../nahash/main/nahash.py
+common = ./main/$(service).py ../nahash/main/nahash.py $(wildcard ./main/lib/*.py)
 main := ./main
 nahash := ../nahash/main
 env = export PYTHONPATH="$(main):$(nahash)";
@@ -12,10 +12,9 @@ env = export PYTHONPATH="$(main):$(nahash)";
 test:
 	$(env) python3 -m unittest discover -p '*_test.py' -s ./test/
 
-sam: build/$(service).yaml
+sam: test build/$(service).yaml
 
 build/$(service).yaml: $(archives) $(nahash)/samgen
-#Do not understand why I need to copy it here
 	$(env) ../nahash/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
 
 deploy: sam
@@ -32,5 +31,8 @@ deploy: sam
 	cp $< $(common) build/
 	zip -j $@ build/*
 
-
-.PHONY: test
+clean:
+	rm -f build/*
+	rm -f dist/*
+	
+.PHONY: test clean
