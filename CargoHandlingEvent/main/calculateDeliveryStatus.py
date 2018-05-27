@@ -1,43 +1,40 @@
 """Calculate cargo delivery status based on itinerary and the most recent event."""
 
-from collections import defaultdict
 from nahash import jso
-from common import findLeg
+from lib.Itinerary import Itinerary
+import CargoHandlingEvent
 
-def againstSchedule(lastEvent, t):
-    if lastEvent.completionTime < t:    return 'AHEAD_OF_SCHEDULE'  
-    elif lastEvent.completionTime == t: return 'ON_SCHEDULE' 
-    else:                               return 'BEHIND_SCHEDULE'
+def expectedAtInterimLeg(lastEvent, itinerary):
+    leg = itinerary.find(lastEvent)
+    return (False, '') if leg == None else (True, leg.isOnSchedule(lastEvent))
 
-def expectedAndOnSchedule(lastEvent, itinerary):
-    leg, _ = findLeg(lastEvent, itinerary)
-    if leg == None: return (False, '')
-    t = lastEvent.eventType.lower()+'Time'
-    return (True, againstSchedule(lastEvent, leg[t]))
+def expectedAtEdge(lastEvent, leg):
+    expected = leg.isExpected(lastEvent)
+    return (expected, leg.isOnSchedule(lastEvent) if expected else '')
 
-def receivedAtFirstLeg(lastEvent, itinerary):
-    return (lastEvent.location == itinerary[0].loadLocation, againstSchedule(lastEvent, itinerary[0].loadTime))
+def expectedAtFirstLeg(lastEvent, itinerary):
+    return expectedAtEdge(lastEvent, itinerary.first())
 
-def atLastLeg(lastEvent, itinerary):
-    return(lastEvent.location == itinerary[-1].unloadLocation, againstSchedule(lastEvent, itinerary[-1].unloadTime))
+def expectedAtFinalLeg(lastEvent, itinerary):
+    return expectedAtEdge(lastEvent, itinerary.last())
 
-def default():
-    return lambda lastEvent, itinerary: (False, '')
+def default(lastEvent, itinerary):
+    return (False, '')
 
-expect = defaultdict(
-    lambda : default, [
-    ('RECEIVE', receivedAtFirstLeg),
-    ('LOAD',    expectedAndOnSchedule),
-    ('UNLOAD',  expectedAndOnSchedule),
-    ('CUSTOMS', atLastLeg),
-    ('CLAIM',   atLastLeg)
-])
+def expect(lastEvent, itinerary):
+    return {
+        CargoHandlingEvent.RECEIVE: expectedAtFirstLeg,
+        CargoHandlingEvent.LOAD:    expectedAtInterimLeg,
+        CargoHandlingEvent.UNLOAD:  expectedAtInterimLeg,
+        CargoHandlingEvent.CUSTOMS: expectedAtFinalLeg,
+        CargoHandlingEvent.CLAIM:   expectedAtFinalLeg
+    }.get(lastEvent.eventType, default)(lastEvent, itinerary)
 
 def deliveryStatus(lastEvent, itinerary):
-    if(not itinerary or len(itinerary) == 0 ): return 'UNKNOWN'
-    (expected, schedule) = expect[lastEvent.eventType](lastEvent, itinerary)
-    return schedule if expected else 'MISDIRECTED'
+    if not itinerary: return 'UNKNOWN'
+    (expected, onSchedule) = expect(lastEvent, itinerary)
+    return onSchedule if expected else 'MISDIRECTED'
 
 def lambda_handler(input, context):    
     inpjs = jso(input)
-    return deliveryStatus(inpjs.lastEvent, inpjs.itinerary)
+    return deliveryStatus(inpjs.lastEvent, Itinerary(inpjs.itinerary))

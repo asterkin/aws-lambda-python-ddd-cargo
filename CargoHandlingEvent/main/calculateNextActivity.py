@@ -1,45 +1,35 @@
 """Estimate cargo next handling activity based on itinerary and the most recent event."""
 
-from collections import defaultdict
-from nahash import *
-from common import findLeg
-
-def Event(eventType, location=None, voyageId=None, completionTime=None):
-    return dropNone({'eventType': eventType, 'location': location, 'voyageId': voyageId, 'completionTime': completionTime})
+from nahash import jso
+from lib.Itinerary import Itinerary
+import CargoHandlingEvent
 
 def expectUnload(lastEvent, itinerary):
-    leg, _ = findLeg(lastEvent, itinerary)
-
-    if leg == None: return Event('NO_ACTIVITY')
-    return Event('UNLOAD', leg.unloadLocation, leg.voyageId, leg.unloadTime)
-
-def expectLoad(leg):
-    return Event('LOAD', leg.loadLocation, leg.voyageId, leg.loadTime)
+    return itinerary.find(lastEvent).unload()
     
 def expectLoadOrClaim(lastEvent, itinerary):
-    leg, it = findLeg(lastEvent, itinerary)
-    
-    if leg == None: return Event('NO_ACTIVITY') 
-    nextLeg = next(it, None)
-    if nextLeg == None: return Event('CLAIM', leg.unloadLocation)
-    return expectLoad(nextLeg)
+    leg = itinerary.find(lastEvent)
+    if leg == None: return CargoHandlingEvent.no_activity()
+    nextLeg = next(leg)
+
+    return leg.load() if nextLeg else leg.claim()
 
 def expectLoadAtOrigin(lastEvent, itinerary):
-    return expectLoad(itinerary[0])
+    return itinerary.first().load()
 
-def default():
-    return lambda lastEvent, itinerary: Event('NO_ACTIVITY')
+def default(lastEvent, itinerary):
+    return CargoHandlingEvent.no_activity()
 
-expect = defaultdict(
-    default, [
-    ('LOAD',    expectUnload),
-    ('UNLOAD',  expectLoadOrClaim),
-    ('RECEIVE', expectLoadAtOrigin)
-])
+def expect(lastEvent, itinerary):
+    return {
+        CargoHandlingEvent.LOAD:    expectUnload,
+        CargoHandlingEvent.UNLOAD:  expectLoadOrClaim,
+        CargoHandlingEvent.RECEIVE: expectLoadAtOrigin
+    }.get(lastEvent.eventType, default)(lastEvent, itinerary)
 
 def nextExpectedEvent(lastEvent, itinerary):
-    return expect[lastEvent.eventType](lastEvent, itinerary)
+    return expect(lastEvent, itinerary) if itinerary else CargoHandlingEvent.no_activity()
 
 def lambda_handler(input, context):
     inpjs = jso(input)
-    return nextExpectedEvent(inpjs.lastEvent, inpjs.itinerary)
+    return nextExpectedEvent(inpjs.lastEvent, Itinerary(inpjs.itinerary))

@@ -7,7 +7,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "LOAD"
       },
       "itinerary": [
@@ -15,17 +15,17 @@ class TestDeliveryStatus(unittest.TestCase):
           "loadLocation": "ABC",
           "unloadLocation": "DEF",
           "unloadTime": 1526897537633,
-          "voyageId": "XYZ"
+          "voyage": "XYZ"
         }
       ]
     }
-    self.assertEqual({'eventType': 'UNLOAD', 'location': 'DEF', 'voyageId': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
+    self.assertEqual({'eventType': 'UNLOAD', 'location': 'DEF', 'voyage': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
 
   def test_unload_claim(self):
     input = {
       "lastEvent": {
         "location": "DEF",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "UNLOAD"
       },
       "itinerary": [
@@ -33,7 +33,7 @@ class TestDeliveryStatus(unittest.TestCase):
           "loadLocation": "ABC",
           "unloadLocation": "DEF",
           "unloadTime": 1526897537633,
-          "voyageId": "XYZ"
+          "voyage": "XYZ"
         }
       ]
     }
@@ -49,17 +49,17 @@ class TestDeliveryStatus(unittest.TestCase):
           {
             "loadLocation": "ABC",
             "loadTime": 1526897537633,
-            "voyageId": "XYZ"
+            "voyage": "XYZ"
           }
         ]
       }
-      self.assertEqual({'eventType': 'LOAD', 'location': 'ABC', 'voyageId': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
+      self.assertEqual({'eventType': 'LOAD', 'location': 'ABC', 'voyage': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
 
     def test_unload_load(self):
       input = {
         "lastEvent": {
           "location": "DEF",
-          "voyageId": "XYZ",
+          "voyage": "XYZ",
           "eventType": "UNLOAD"
         },
         "itinerary": [
@@ -67,22 +67,22 @@ class TestDeliveryStatus(unittest.TestCase):
             "loadLocation": "ABC",
             "unloadLocation": "DEF",
             "unloadTime": 1526897537633,
-            "voyageId": "XYZ"
+            "voyage": "XYZ"
           },
           {
             "loadLocation": "DEF",
             "loadTime": 1526897537633,
-            "voyageId": "STU"
+            "voyage": "STU"
           }    
         ]
       }
-      self.assertEqual({'eventType': 'LOAD', 'location': 'DEF', 'voyageId': 'STU', 'completionTime': 1526897537633}, lambda_handler(input, None))
+      self.assertEqual({'eventType': 'LOAD', 'location': 'DEF', 'voyage': 'STU', 'completionTime': 1526897537633}, lambda_handler(input, None))
 
   def test_no_activity(self):
     input = {
       "lastEvent": {
         "location": "DEF",
-        "voyageId": "LMN",
+        "voyage": "LMN",
         "eventType": "UNLOAD"
       },
       "itinerary": [
@@ -90,12 +90,12 @@ class TestDeliveryStatus(unittest.TestCase):
           "loadLocation": "ABC",
           "unloadLocation": "DEF",
           "unloadTime": 1526897537633,
-          "voyageId": "XYZ"
+          "voyage": "XYZ"
         },
         {
           "loadLocation": "DEF",
           "loadTime": 1526897537633,
-          "voyageId": "STU"
+          "voyage": "STU"
         }    
       ]
     }
@@ -112,12 +112,12 @@ class TestDeliveryStatus(unittest.TestCase):
           "loadLocation": "ABC",
           "unloadLocation": "DEF",
           "unloadTime": 1526897537633,
-          "voyageId": "XYZ"
+          "voyage": "XYZ"
         },
         {
           "loadLocation": "DEF",
           "loadTime": 1526897537633,
-          "voyageId": "STU"
+          "voyage": "STU"
         }    
       ]
     }

@@ -9,21 +9,21 @@ class TestDeliveryStatus(unittest.TestCase):
           "loadTime": 1526897537633,
           "unloadLocation": "DEF",
           "unloadTime": 1526897537635,
-          "voyageId": "XYZ"
+          "voyage": "XYZ"
         },
         {
           "loadLocation": "DEF",
           "loadTime": 1526897537637,
           "unloadLocation": "GHI",
           "unloadTime": 1526897537637,
-          "voyageId": "STU"
+          "voyage": "STU"
         }    
     ]
   def test_unknown(self):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "RECEIVE"
       },
       "itinerary": []
@@ -34,7 +34,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "RECEIVE",
         "completionTime": 1526897537632
       },
@@ -46,7 +46,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "RECEIVE",
         "completionTime": 1526897537633
       },
@@ -58,7 +58,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "RECEIVE",
         "completionTime": 1526897537635
       },
@@ -70,7 +70,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "DEF",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "RECEIVE",
         "completionTime": 1526897537635
       },
@@ -82,7 +82,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "ABC",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "LOAD",
         "completionTime": 1526897537633
       },
@@ -94,7 +94,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "DEF",
-        "voyageId": "XYZ",
+        "voyage": "XYZ",
         "eventType": "UNLOAD",
         "completionTime": 1526897537637
       },
@@ -106,7 +106,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "GHI",
-        "voyageId": "XYZ",
+        "voyage": "STU",
         "eventType": "CUSTOMS",
         "completionTime": 1526897537632
       },
@@ -118,7 +118,7 @@ class TestDeliveryStatus(unittest.TestCase):
     input = {
       "lastEvent": {
         "location": "GHI",
-        "voyageId": "XYZ",
+        "voyage": "STU",
         "eventType": "CLAIM",
         "completionTime": 1526897537632
       },
