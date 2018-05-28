@@ -4,16 +4,22 @@ import boto3
 from botocore.exceptions import ClientError
 import time
 import os
+import CargoHandlingEvent
+
+def resources():
+    return [
+        {'ref': 'CargoHandlingEvents', 'ops': ['dynamodb:PutItem']}
+    ]
 
 dynamodb = boto3.resource('dynamodb')
-dbname = os.getenv('CargoHandlingEvent')
+dbname = os.getenv('CargoHandlingEvents')
 table = dynamodb.Table(dbname if dbname else 'ignore') #required for samgen
 
 def lambda_handler(event, context):
     try:
         table.put_item(
             Item= {
-                #this is do mostly for security reasons - not to put into DB unchecked record
+                #this is done mostly for security reasons - not to put into DB unchecked record
                 'cargo':            event['cargo'],
                 'completionTime':   event['completionTime'],
                 'registrationTime': int(time.time()*1000),

@@ -1,10 +1,10 @@
 all: deploy
 
 service = $(shell basename `pwd`)
-bucket = s3://$(shell echo $(service) | tr '[:upper:]' '[:lower:]')
+bucket = $(shell echo $(service) | tr '[:upper:]' '[:lower:]')
 functions := $(patsubst ./main/%.py, %, $(filter-out ./main/$(service).py, $(wildcard ./main/*.py)))
 archives := $(patsubst %, ./dist/%.zip, $(functions))
-common = ./main/$(service).py ../nahash/main/nahash.py $(wildcard ./main/lib/*.py)
+common = ./main/$(service).py $(wildcard ../nahash/main/*.py) $(wildcard ./main/lib/*.py)
 main := ./main
 nahash := ../nahash/main
 env = export PYTHONPATH="$(main):$(nahash)";
@@ -12,15 +12,17 @@ env = export PYTHONPATH="$(main):$(nahash)";
 test:
 	$(env) python3 -m unittest discover -p '*_test.py' -s ./test/
 
-sam: test build/$(service).yaml
+sam: test build/$(service)-package.yaml
 
 build/$(service).yaml: $(archives) $(nahash)/samgen
 	$(env) ../nahash/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
 
+build/$(service)-package.yaml: build/$(service).yaml
+	aws cloudformation package --template-file build/$(service).yaml --s3-bucket $(bucket) --output-template-file build/$(service)-package.yaml
+
 deploy: sam
-	aws s3 sync ./dist/ $(bucket)
 	aws cloudformation deploy \
-	--template-file build/$(service).yaml \
+	--template-file build/$(service)-package.yaml \
 	--stack-name $(service) \
 	--capabilities CAPABILITY_IAM
 

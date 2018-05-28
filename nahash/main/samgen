@@ -17,10 +17,19 @@ funcTemplate = """
         Properties:
             Handler: $NAME.lambda_handler
             Runtime: python3.6
-            CodeUri: s3://$BUCKET/$NAME.zip
+            CodeUri: ../dist/$NAME.zip
             Description: $DOC
             MemorySize: 128
             Timeout: 3
+"""
+
+envTemplate = """
+            Environment:
+                Variables:$VARIABLES
+"""
+
+envRefTemplate = """
+                    $NAME: !Ref $NAME
 """
 
 outputTemplate = """
@@ -31,26 +40,57 @@ outputTemplate = """
             Name: !Sub '${AWS::StackName}-$NAME'
 """
 
-def resource(bucket, name, doc):
-    return funcTemplate.replace('$BUCKET', bucket).replace('$NAME', name).replace('$DOC', doc)
+policyTemplate = """
+            Policies:
+                - Version: '2012-10-17'
+                  Statement:
+                    - Effect: Allow
+"""
+resActionsTemplate = """
+                      Action:$ACTIONS
+                      Resource: !GetAtt $RESOURCE.Arn
+"""
+resActionTemplate = """
+                        - '$ACTION'
+"""
+
+
+
+def resActions(ref):
+    return resActionsTemplate.replace('$ACTIONS', ''.join(map(lambda a: resActionTemplate.replace('$ACTION', a), ref['ops']))).replace('$RESOURCE', ref['ref'])
+
+def policies(refs):
+    return policyTemplate + ''.join(map(lambda r: resActions(r), refs))
+
+def environment(refs):
+    return envTemplate.replace('$VARIABLES', ''.join(map(lambda r: envRefTemplate.replace('$NAME', r['ref']), refs)))
+
+def references(refs):
+    return policies(refs) + environment(refs)
+
+def resource(name):
+    mod = import_module(name)
+    doc = mod.__doc__
+    func = funcTemplate.replace('$NAME', name).replace('$DOC', doc)
+    refs = references(mod.resources()) if 'resources' in mod.__dict__ else ''
+    return (func + refs, doc)
 
 def output(name, doc):
     return outputTemplate.replace('$NAME', name).replace('$DOC', doc)
 
 def resources(service, functions):
-    bucket = service.lower()
     resources = ''
     outputs = ''
     for name in functions:
-        doc = import_module(name).__doc__
-        resources += resource(bucket, name, doc)
+        (res, doc) = resource(name)
+        resources += res
         outputs += output(name, doc)
     return resources + '\nOutputs:\n' + outputs
 
 def generateTemplate(service, functions):
     sm = import_module(service)
-    print(template % (sm.__doc__, ''.join(map(lambda r: str(r), sm.resources())) + resources(service, functions)))
+    return (template % (sm.__doc__, ''.join(map(lambda r: str(r), sm.resources())) + resources(service, functions))).replace('\n\n','\n')
 
-generateTemplate(sys.argv[1], sys.argv[2:])
+print(generateTemplate(sys.argv[1], sys.argv[2:]))
 
 
