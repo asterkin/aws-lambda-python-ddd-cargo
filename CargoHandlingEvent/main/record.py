@@ -16,17 +16,18 @@ dbname = os.getenv('CargoHandlingEvents')
 table = dynamodb.Table(dbname if dbname else 'ignore') #required for samgen
 
 def lambda_handler(event, context):
+    item = {
+        #this is done mostly for security reasons - not to put into DB unchecked record
+        'cargo':            event['cargo'],
+        'completionTime':   event['completionTime'],
+        'registrationTime': int(time.time()*1000),
+        'eventType':        event['eventType'],
+        'location':         event['location']
+    }
+    if 'voyage' in event: item['voyage'] = event['voyage']
     try:
         table.put_item(
-            Item= {
-                #this is done mostly for security reasons - not to put into DB unchecked record
-                'cargo':            event['cargo'],
-                'completionTime':   event['completionTime'],
-                'registrationTime': int(time.time()*1000),
-                'voyage':           event['voyage'],
-                'eventType':        event['eventType'],
-                'location':         event['location']
-            },
+            Item = item,
             ConditionExpression = 'attribute_not_exists(cargo) AND attribute_not_exists(completionTime)'
         )
         return "OK"
