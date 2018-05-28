@@ -1,19 +1,18 @@
 """Convert cargo handling evet type into transportation status."""
 
-from collections import defaultdict
 from nahash import jso
+import CargoHandlingEvent
 
-status = defaultdict(
-    lambda : 'UNKNOWN',[
-        (None, 'NOT_RECEIVED'),
-        ('LOAD', 'ONBOARD_CARRIER'),
-        ('UNLOAD',  'IN_PORT'),
-        ('RECEIVE', 'IN_PORT'),
-        ('CUSTOMS', 'IN_PORT'),
-        ('CLAIM',   'CLAIMED')
-
-])
+def status(eventType):
+    return {
+        None:                        'NOT_RECEIVED',
+        CargoHandlingEvent.LOAD:     'ONBOARD_CARRIER',
+        CargoHandlingEvent.UNLOAD:   'IN_PORT',
+        CargoHandlingEvent.RECEIVE:  'IN_PORT',
+        CargoHandlingEvent.CUSTOMS:  'IN_PORT',
+        CargoHandlingEvent.CLAIM:    'CLAIMED'
+    }.get(eventType, 'UNKNOWN')
 
 def lambda_handler(input, context):
-    return status[jso(input).eventType]
+    return status(jso(input).eventType)
 
