@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cargo TrackingSystem Facade, API Gateway and StepFunctions
+Resources:
+  RegisterCargoHandlingEvent:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: RecordCargoHandlingEvent
+      DefinitionString:
+        !Sub
+          - |-
+            {
+              "Comment": "Check cargo, location, and voyage indentifiers in parallel",
+              "StartAt": "CheckInput",
+              "States": {
+                "CheckInput": {
+                  "Type": "Parallel",
+                  "Next": "InputCheckSucceeded?",
+                  "ResultPath": "$.inputStatus",
+                  "Branches": [
+                    {
+                      "StartAt": "CheckCargo",
+                      "States": {
+                        "CheckCargo": {
+                          "Type": "Task",
+                          "Resource": "${checkCargo}",
+                          "End": true
+                        }
+                      }
+                    },
+                    {
+                      "StartAt": "CheckLocation",
+                      "States": {
+                        "CheckLocation": {
+                          "Type": "Task",
+                          "Resource": "${checkLocation}",
+                          "End": true
+                        }
+                      }
+                    },
+                    {
+                      "StartAt": "CheckVoyage",
+                      "States": {
+                        "CheckVoyage": {
+                          "Type": "Task",
+                          "Resource": "${checkVoyage}",
+                          "End": true
+                        }
+                      }
+                    }        
+                  ]
+                },
+                "InputCheckSucceeded?": {
+                  "Type": "Choice",
+                  "Choices": [
+                    {
+                      "And": [
+                        {
+                          "Variable": "$.inputStatus[0]",
+                          "StringEquals": "OK"
+                        },
+                        {
+                          "Variable": "$.inputStatus[1]",
+                          "StringEquals": "OK"
+                        },
+                        {
+                          "Variable": "$.inputStatus[2]",
+                          "StringEquals": "OK"
+                        }            
+                      ],
+                      "Next": "RecordEvent"
+                    }
+                  ],
+                  "Default": "ReportErrors"
+                },
+                "RecordEvent": {
+                  "Type": "Task",
+                  "Resource": "${recordEvent}",
+                  "ResultPath": "$.recordingStatus",
+                  "Next": "EventRecordingSucceeded?"      
+                },
+                "EventRecordingSucceeded?": {
+                  "Type": "Choice",
+                  "Choices": [
+                    {
+                      "Variable": "$.recordingStatus",
+                      "StringEquals": "OK",
+                      "Next": "Success"
+                    }
+                  ],
+                  "Default": "ReportErrors"
+                },
+                "ReportErrors" :
+                {
+                  "Type": "Task",
+                  "Resource": "${reportError}",
+                  "End": true
+                },
+                "Success" :
+                {
+                  "Type": "Pass",
+                  "End": true
+                }  }
+            }
+          - {checkCargo: !ImportValue Cargo-checkCargo, checkLocation: !ImportValue Voyage-checkLocation, checkVoyage: !ImportValue Voyage-checkVoyage, recordEvent: !ImportValue CargoHandlingEvent-record, reportError: !ImportValue CargoHandlingEvent-reportError}
+      RoleArn: arn:aws:iam::749364635755:role/service-role/StatesExecutionRole-eu-west-1
+
