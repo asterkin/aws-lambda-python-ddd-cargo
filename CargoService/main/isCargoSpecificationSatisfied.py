@@ -1,3 +1,5 @@
+"""Check whether Cargo Specification is satisfied by Itinerary."""
+
 from nahash import jso
 
 def isSatisfied(specification, itinerary):

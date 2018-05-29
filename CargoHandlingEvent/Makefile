@@ -18,7 +18,7 @@ build/$(service).yaml: $(archives) $(nahash)/samgen
 	$(env) ../nahash/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
 
 build/$(service)-package.yaml: build/$(service).yaml
-	aws cloudformation package --template-file build/$(service).yaml --s3-bucket $(bucket) --output-template-file build/$(service)-package.yaml
+	aws cloudformation package --template-file build/$(service).yaml --s3-bucket nahash --s3-prefix $(bucket) --output-template-file build/$(service)-package.yaml
 
 deploy: sam
 	aws cloudformation deploy \
