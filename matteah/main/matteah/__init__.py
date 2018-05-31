@@ -1,58 +1,125 @@
-def jso(v):
-    class Struct:
-        def __init__(self, d):
-            self.__d__ = d
-
-        def __getattr__(self, a):
-            return jso(self.__d__[a]) if a in self.__d__ else None
-        
-        def __getitem__(self, a):
-            return self.__getattr__(a)
-
-        def __repr__(self):
-            return self.__d__.__repr__()
-    class List:
-        def __init__(self, l):
-            self.__l__ = l
-
-        def __getitem__(self, i):
-            if( i < len(self.__l__)): return jso(self.__l__[i])
-            else: raise StopIteration
-            
-        class Iterator:
-            def __init__(self, l):
-                self.__i__ = -1
-                self.__l__ = l
-                
-            def __iter__(self):
-                return self
-                
-            def __next__(self):
-                self.__i__ += 1
-                return List.__getitem__(self.__l__, self.__i__)
-            
-        def __iter__(self):
-            return List.Iterator(self)
-
-        def __repr__(self):
-            return self.__l__.__repr__()
-
-        def __len__(self):
-            return self.__l__.__len__()
-
-    if isinstance(v, dict): return Struct(v)
-    elif isinstance(v, list): return List(v)
-    else: return v
-
+"""Find in list using a general predicate. Seems to be missing in Python"""
 def find(p, xs):
     it = iter(xs)
     for v in it:
         if(p(v)): return (v, it)
     return (None, it)
 
+"""Drop all None values in a dict."""
 def dropNone(d):
     return {k:v for k,v in d.items() if v is not None}
 
+#I do not like this monolith, but my knowledge of Python module structure is limitted
+
+"""Generic Repository class. Kinda poor-main ORM"""
+
+dbResTemplate = """
+    $NAME:
+        Type: AWS::DynamoDB::Table
+        Properties: 
+            AttributeDefinitions:$ATTRIBUTES
+            KeySchema:$KEYS
+            ProvisionedThroughput: 
+                ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+"""
+#TBD parametrized throughput
+
+resActionsTemplate = """
+                      Action:$ACTIONS
+                      Resource: !GetAtt $RESOURCE.Arn
+"""
+resActionTemplate = """
+                        - '$ACTION'
+"""
+
+import boto3
+import os
+
+def attribute(attr):
+    return """
+                - AttributeName: $NAME
+                  AttributeType: $TYPE""".replace('$NAME', attr['name']).replace('$TYPE', attr['type']) if attr else ''
+
+def key(attr, keyType):
+    return """
+                - AttributeName: $NAME
+                  KeyType: $TYPE""".replace('$NAME', attr['name']).replace('$TYPE', keyType) if attr else ''
+
+class Repository:
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.hashKey  = kwargs.get('hashKey')
+        self.rangeKey = kwargs.get('rangeKey', None)
+    def __str__(self):
+        return dResTemplate.replace('$NAME', self.name).replace('$ATTRIBUTES', self.attributes()).replace('$KEYS', self.keys())
+    def attributes(self):
+        return attribute(self.hashKey) + attribute(self.rangeKey)
+    def keys(self):
+        return key(self.hashKey, 'HASH') + key(self.rangeKey, 'RANGE')
+
+class RepositoryClient:
+    def __init__(self, repository, *actions):
+        self.name = repository.name
+        self.dynamodb = boto3.resource('dynamodb')
+        dbname = os.getenv(self.name)
+        self.table = dynamodb.Table(dbname) if dbname else None #required for samgen
+        self.hashKey = repository.hashKey
+        self.rangeKey = repository.rangeKey
+        self.actions = actions
+    def __str__(self):
+        return resActionsTemplate.replace('$ACTIONS', ''.join(map(lambda a: resActionTemplate
+                .replace('$ACTION', a), self.actions))).replace('$RESOURCE', self.name)
+
+"""Helper class to convert a DynamoDB item to JSON."""
+
+import json
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            if o % 1 > 0:
+                return float(o)
+            else:
+                return int(o)
+        return super(DecimalEncoder, self).default(o)
+
+class GetClient(RepositoryClient):
+    def __init__(self, repository):
+        RepositoryClient.__init__(self, repository, 'GetItem')
+    def has_item(key):
+        return 'Item' in self.table.get_item(Key={self.hashKay:key},ProjectionExpression=self.hashKey)
+    def get_item(key):
+        res = self.table.get_item(Key={self.hashKay:key})
+        return res['Item'] if 'Item' in res else None
+
+class PutClient(RepositoryClient):
+    def __init__(self, repository):
+        RepositoryClient.__init__(self, repository, 'PutItem')
+        self.unique = 'attribute_not_exists(%s)' % hashKey
+        if rangeKey: self.unique += 'AND attribute_not_exists(%s)' % rangeKey
+    def put_item(item, unique=True):
+        try:
+            self.table.put_item(
+                Item = item,
+                ConditionExpression = self.unique if unique else None
+            )
+            return "OK"
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                return 'DUPLICATE'
+            raise
+
+class QueryClient(RepositoryClient):
+    def __init__(self, name, hashKey, rangeKey):
+        RepositoryClient.__init__(self, name, hashKey, 'Query')
+    def get_last(self, key):
+        result = table.query(
+            KeyConditionExpression=Key(self.hashKey).eq(key),
+            Limit = 1,
+            ScanIndexForward = False
+        )['Items']
+        return result[0] if len(result) == 1 else 'NOT_FOUND'
 
     
 

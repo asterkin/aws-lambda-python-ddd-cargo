@@ -3,7 +3,7 @@ import unittest
 
 class TestMatteah(unittest.TestCase):
     def setUp(self):
-        self.event = jso({
+        self.event = jso.jso({
             "lastEvent": {
                 "location": "DEF",
                 "voyageId": "XYZ",

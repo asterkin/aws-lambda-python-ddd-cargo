@@ -1,3 +1,5 @@
+"""Lazy conversion of dict into Python object"""
+
 def jso(v):
     class Struct:
         def __init__(self, d):
@@ -44,16 +46,3 @@ def jso(v):
     elif isinstance(v, list): return List(v)
     else: return v
 
-def find(p, xs):
-    it = iter(xs)
-    for v in it:
-        if(p(v)): return (v, it)
-    return (None, it)
-
-def dropNone(d):
-    return {k:v for k,v in d.items() if v is not None}
-
-
-    
-
-        

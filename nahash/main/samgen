@@ -2,6 +2,7 @@
 
 import sys
 from importlib import import_module
+from matteah import RepositoryClient
 
 template = """
 AWSTemplateFormatVersion: '2010-09-09'
@@ -72,7 +73,7 @@ def resource(name):
     mod = import_module(name)
     doc = mod.__doc__
     func = funcTemplate.replace('$NAME', name).replace('$DOC', doc)
-    refs = references(mod.resources()) if 'resources' in mod.__dict__ else ''
+    refs = references(filter(lambda r: isinstance(r, RepositoryClient), map(lambda v: mod__dict__[v], vars(mod)))) #references(mod.resources()) if 'resources' in mod.__dict__ else ''
     return (func + refs, doc)
 
 def output(name, doc):
