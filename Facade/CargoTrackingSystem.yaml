@@ -101,6 +101,6 @@ Resources:
                   "End": true
                 }  }
             }
-          - {checkCargo: !ImportValue Cargo-checkCargo, checkLocation: !ImportValue Voyage-checkLocation, checkVoyage: !ImportValue Voyage-checkVoyage, recordEvent: !ImportValue CargoHandlingEvent-record, reportError: !ImportValue CargoHandlingEvent-reportError}
+          - {checkCargo: !ImportValue Cargo-check-cargo, checkLocation: !ImportValue Voyage-check-location, checkVoyage: !ImportValue Voyage-check-voyage, recordEvent: !ImportValue CargoHandlingEvent-record, reportError: !ImportValue CargoHandlingEvent-report-error}
       RoleArn: arn:aws:iam::749364635755:role/service-role/StatesExecutionRole-eu-west-1
 
