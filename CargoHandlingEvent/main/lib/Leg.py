@@ -1,20 +1,18 @@
 import CargoHandlingEvent
 
-def eventPoint(event):
+def event_point(event):
     return {
        CargoHandlingEvent.LOAD: 'load',
        CargoHandlingEvent.RECEIVE: 'load' 
-    }.get(event.eventType, 'unload')
+    }.get(event.event_type, 'unload')
     
-def eventLocation(event):
-    return eventPoint(event) + 'Location'
-
-def eventTime(event):
-    return eventPoint(event) + 'Time'
-    
-def expectedEvent(event):
-    loc = eventLocation(event)
-    return lambda leg: event.location == leg[loc] and event.voyage == leg.voyage
+def expected_event(event):
+    loc = event_point(event)
+    # def p(leg):
+    #     print(loc, event, leg[loc])
+    #     return event.location == leg[loc].location and event.voyage == leg.voyage
+    # return p
+    return lambda leg: event.location == leg[loc].location and event.voyage == leg.voyage
 
 class LegObject:
     def __init__(self, leg, it):
@@ -24,18 +22,18 @@ class LegObject:
         l = next(self.it, None)
         return Leg((l, self.it))
     def load(self):
-        return CargoHandlingEvent.load(self.leg.loadLocation, self.leg.voyage, self.leg.loadTime)
+        return CargoHandlingEvent.load(self.leg.load.location, self.leg.voyage, self.leg.load.time)
     def unload(self):
-        return CargoHandlingEvent.unload(self.leg.unloadLocation, self.leg.voyage, self.leg.unloadTime)
+        return CargoHandlingEvent.unload(self.leg.unload.location, self.leg.voyage, self.leg.unload.time)
     def claim(self):
-        return CargoHandlingEvent.claim(self.leg.unloadLocation)
-    def isOnSchedule(self, event):
-        t = self.leg[eventTime(event)]
-        if event.completionTime < t:    return 'AHEAD_OF_SCHEDULE'  
-        elif event.completionTime == t: return 'ON_SCHEDULE' 
-        else:                           return 'BEHIND_SCHEDULE'
-    def isExpected(self, event):
-        return expectedEvent(event)(self.leg)
+        return CargoHandlingEvent.claim(self.leg.unload.location)
+    def is_on_schedule(self, event):
+        t = self.leg[event_point(event)].time
+        if event.completion_time < t:    return 'AHEAD_OF_SCHEDULE'  
+        elif event.completion_time == t: return 'ON_SCHEDULE' 
+        else:                            return 'BEHIND_SCHEDULE'
+    def is_expected(self, event):
+        return expected_event(event)(self.leg)
 
 def Leg(t):
     leg, it = t

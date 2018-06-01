@@ -1,5 +1,6 @@
 """Encapsulates CargoHandlingEvent Repository and all relevant computations."""
-from mattea import dropNone, Repository
+
+from matte import drop_nulls, Repository
 
 RECEIVE     = 'RECEIVE'
 LOAD        = 'LOAD'
@@ -9,15 +10,16 @@ CUSTOMS     = 'CUSTOMS'
 NO_ACTIVITY = 'NO_ACTIVITY'
 
 CARGO = 'cargo'
-TIMESTAMP = 'completionTime'
+TIMESTAMP = 'completion_time'
 
 Events = Repository('CargoHandlingEvents', hashKey = {CARGO : str}, rangeKey = {TIMESTAMP : int})
 
-def CargoHandlingEvent(cargo, eventType, location=None, voyage=None, completionTime=None):
-    return dropNone({CARGO: cargo, 'eventType': eventType, 'location': location, 'voyage': voyage, TIMESTAMP: completionTime})
+##ValueObject types for interface protection
+def CargoHandlingEvent(cargo, event_type, location=None, voyage=None, completion_time=None):
+    return drop_nulls({CARGO: cargo, 'event_type': event_type, 'location': location, 'voyage': voyage, TIMESTAMP: completion_time})
 
 #No need for cargo id in next activity event
-def load(location, voyage, completionTime):     return CargoHandlingEvent(None, LOAD, location, voyage, completionTime)
-def unload(location, voyage, completionTime):   return CargoHandlingEvent(None, UNLOAD, location, voyage, completionTime)
-def claim(location):                            return CargoHandlingEvent(None, CLAIM, location)
-def no_activity():                              return CargoHandlingEvent(None, NO_ACTIVITY) 
+def load(location, voyage, completion_time):     return CargoHandlingEvent(None, LOAD, location, voyage, completion_time)
+def unload(location, voyage, completion_time):   return CargoHandlingEvent(None, UNLOAD, location, voyage, completion_time)
+def claim(location):                             return CargoHandlingEvent(None, CLAIM, location)
+def no_activity():                               return CargoHandlingEvent(None, NO_ACTIVITY) 

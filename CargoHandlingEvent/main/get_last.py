@@ -1,9 +1,9 @@
 """Retrieve the most recent event for particular cargo"""
 
-from mattea import QueryClient
+from matte import QueryClient
 from CargoHandlingEvent import Events, CargoHandlingEvent
 
 events = QueryClient(Events)
 
-def getLast(cargo):
+def get_last(cargo):
     return events.get_last(cargo)

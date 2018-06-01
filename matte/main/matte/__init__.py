@@ -6,7 +6,7 @@ def find(p, xs):
     return (None, it)
 
 """Drop all None values in a dict."""
-def dropNone(d):
+def drop_nulls(d):
     return {k:v for k,v in d.items() if v is not None}
 
 #I do not like this monolith, but my knowledge of Python module structure is limitted

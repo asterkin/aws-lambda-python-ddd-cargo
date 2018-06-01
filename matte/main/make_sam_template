@@ -2,7 +2,7 @@
 
 import sys
 from importlib import import_module
-from mattea import Resource, Client
+from matte import Resource, Client
 
 template = """
 AWSTemplateFormatVersion: '2010-09-09'
@@ -13,12 +13,12 @@ Resources:
 """
 
 funcTemplate = """
-    $NAME:
+    $ID:
         Type: 'AWS::Serverless::Function'
         Properties:
             Handler: lambda_handler.lambda_handler
             Runtime: python3.6
-            CodeUri: ../dist/$NAME.zip
+            CodeUri: ../dist/$ZIP.zip
             Description: $DOC
             MemorySize: 128
             Timeout: 3
@@ -34,9 +34,9 @@ envRefTemplate = """
 """
 
 outputTemplate = """
-    $NAME:
+    $ID:
         Description: $DOC
-        Value: !GetAtt $NAME.Arn
+        Value: !GetAtt $ID.Arn
         Export:
             Name: !Sub '${AWS::StackName}-$NAME'
 """
@@ -74,12 +74,12 @@ def references(refs):
 def function(name):
     mod = import_module(name)
     doc = mod.__doc__
-    func = funcTemplate.replace('$NAME', name).replace('$DOC', doc)
+    func = funcTemplate.replace('$ID', name.replace('_','')).replace('$ZIP', name).replace('$DOC', doc)
     refs = references(list(filterGlobals(mod, Client))) 
     return (func + refs, doc)
 
 def output(name, doc):
-    return outputTemplate.replace('$NAME', name).replace('$DOC', doc)
+    return outputTemplate.replace('$ID', name.replace('_','')).replace('$NAME', name.replace('_','-')).replace('$DOC', doc) #SAM does not like underscores
 
 def functions(service, modules):
     resources = ''

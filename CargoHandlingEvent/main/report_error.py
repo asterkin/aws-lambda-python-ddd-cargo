@@ -1,4 +1,4 @@
 """Report CargoHandlingEventError for further investigation."""
 
-def reportError(event, errors):
+def report_error(event, errors):
     print({'event': event, 'errors': errors})

@@ -4,18 +4,18 @@ service = $(shell basename `pwd`)
 prefix = $(shell echo $(service) | tr '[:upper:]' '[:lower:]')
 functions := $(patsubst ./main/%.py, %, $(filter-out ./main/$(service).py, $(wildcard ./main/*.py)))
 archives := $(patsubst %, ./dist/%.zip, $(functions))
-common = ./main/$(service).py $(wildcard ../mattea/main/mattea/*.py) $(wildcard ./main/lib/*.py)
+common = ./main/$(service).py $(wildcard ../matte/main/matte/*.py) $(wildcard ./main/lib/*.py)
 main := ./main
-mattea := ../mattea/main
-env = export PYTHONPATH="$(main):$(mattea)";
+matte := ../matte/main
+env = export PYTHONPATH="$(main):$(matte)";
 
 test:
 	$(env) python3 -m unittest discover -p '*_test.py' -s ./test/
 
 sam: test build/$(service)-package.yaml
 
-build/$(service).yaml: $(archives) $(mattea)/samgen
-	$(env) ../mattea/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
+build/$(service).yaml: $(archives) $(matte)/make_sam_template
+	$(env) ../matte/main/make_sam_template $(service) $(basename $(functions)) > build/$(service).yaml
 
 build/$(service)-package.yaml: build/$(service).yaml
 	aws cloudformation package --template-file build/$(service).yaml --s3-bucket $(bucket) --s3-prefix $(prefix) --output-template-file build/$(service)-package.yaml
@@ -30,13 +30,13 @@ deploy: sam
 	mkdir -p dist
 	mkdir -p build
 	rm -fR build/*
-	mkdir build/mattea
+	mkdir build/matte
 	mkdir build/lib
 	cp $< build/
 	cp ./main/$(service).py build/
 	cp ./main/lib/*.py ./build/lib/
-	cp $(mattea)/mattea/*.py ./build/mattea/	
-	$(env) ../mattea/main/make_handler $(patsubst main/%.py, %, $<) > build/lambda_handler.py
+	cp $(matte)/matte/*.py ./build/matte/	
+	$(env) ../matte/main/make_handler $(patsubst main/%.py, %, $<) > build/lambda_handler.py
 	cd ./build; zip -r ../$@ *; cd -
 
 clean:

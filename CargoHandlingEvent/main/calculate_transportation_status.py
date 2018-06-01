@@ -1,8 +1,8 @@
-"""Convert cargo handling evet type into transportation status."""
+"""Convert cargo handling event type into transportation status."""
 
 import CargoHandlingEvent
 
-def calculateTransportationStatus(event):
+def calculate_transportation_status(last_event):
     return {
         None:                        'NOT_RECEIVED',
         CargoHandlingEvent.LOAD:     'ONBOARD_CARRIER',
@@ -10,6 +10,6 @@ def calculateTransportationStatus(event):
         CargoHandlingEvent.RECEIVE:  'IN_PORT',
         CargoHandlingEvent.CUSTOMS:  'IN_PORT',
         CargoHandlingEvent.CLAIM:    'CLAIMED'
-    }.get(event.eventType, 'UNKNOWN')
+    }.get(last_event.event_type, 'UNKNOWN')
 
 

@@ -1,8 +1,8 @@
-from mattea import Repository, GetClient
+from matte import Repository, GetClient
 
 Cargoes = Repository('Cargo', hashKey={'cargo' : str})
 
 cargoes = GetClient(Cargoes)
 
-def checkCargo(cargo: str) -> str:
+def check_cargo(cargo: str) -> str:
     return cargo

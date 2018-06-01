@@ -1,9 +1,10 @@
-from mattea import *
+from matte import *
+from matte.jso import jso
 import unittest
 
-class TestMattea(unittest.TestCase):
+class TestMatte(unittest.TestCase):
     def setUp(self):
-        self.event = jso.jso({
+        self.event = jso({
             "lastEvent": {
                 "location": "DEF",
                 "voyageId": "XYZ",
@@ -40,7 +41,7 @@ class TestMattea(unittest.TestCase):
         self.assertIsNone(next(it, None))
 
     def test_drop(self):
-        self.assertEqual({'a': 1}, dropNone({'a': 1, 'b': None}))
+        self.assertEqual({'a': 1}, drop_nulls({'a': 1, 'b': None}))
 
 if __name__ == '__main__':
     unittest.main()

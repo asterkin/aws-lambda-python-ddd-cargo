@@ -1,11 +1,11 @@
-from mattea import find
-from lib.Leg import Leg, expectedEvent
+from matte import find
+from lib.Leg import Leg, expected_event
     
 class ItineraryObject:
     def __init__(self, schedule):
         self.schedule = schedule
     def find(self, event):
-        return Leg(find(expectedEvent(event), self.schedule))
+        return Leg(find(expected_event(event), self.schedule))
     def first(self):
         it  = iter(self.schedule)
         l = next(it, None)
