@@ -1,6 +1,5 @@
 """Estimate cargo next handling activity based on itinerary and the most recent event."""
 
-from nahash import jso
 from lib.Itinerary import Itinerary
 import CargoHandlingEvent
 
@@ -15,7 +14,7 @@ def expectLoadOrClaim(lastEvent, itinerary):
     return leg.load() if nextLeg else leg.claim()
 
 def expectLoadAtOrigin(lastEvent, itinerary):
-    return itinerary.first().load()
+    return itinerary.first().load(lastEvent.cargo)
 
 def default(lastEvent, itinerary):
     return CargoHandlingEvent.no_activity()
@@ -27,9 +26,6 @@ def expect(lastEvent, itinerary):
         CargoHandlingEvent.RECEIVE: expectLoadAtOrigin
     }.get(lastEvent.eventType, default)(lastEvent, itinerary)
 
-def nextExpectedEvent(lastEvent, itinerary):
-    return expect(lastEvent, itinerary) if itinerary else CargoHandlingEvent.no_activity()
+def calculateNextActivity(lastEvent, itinerary):
+    return expect(lastEvent, Itinerary(itinerary)) if itinerary else CargoHandlingEvent.no_activity()
 
-def lambda_handler(input, context):
-    inpjs = jso(input)
-    return nextExpectedEvent(inpjs.lastEvent, Itinerary(inpjs.itinerary))

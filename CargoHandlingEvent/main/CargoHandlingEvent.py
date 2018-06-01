@@ -1,6 +1,5 @@
 """Encapsulates CargoHandlingEvent Repository and all relevant computations."""
-from nahash import dropNone
-from Repository import Repository
+from mattea import dropNone, Repository
 
 RECEIVE     = 'RECEIVE'
 LOAD        = 'LOAD'
@@ -12,15 +11,13 @@ NO_ACTIVITY = 'NO_ACTIVITY'
 CARGO = 'cargo'
 TIMESTAMP = 'completionTime'
 
-def resources():
-    return [
-        Repository('CargoHandlingEvents', hashKey = {'name': CARGO, 'type': 'S'}, rangeKey = {'name': TIMESTAMP, 'type': 'N'})
-    ]
+Events = Repository('CargoHandlingEvents', hashKey = {CARGO : str}, rangeKey = {TIMESTAMP : int})
 
-def CargoHandlingEvent(eventType, location=None, voyage=None, completionTime=None):
-    return dropNone({'eventType': eventType, 'location': location, 'voyage': voyage, TIMESTAMP: completionTime})
+def CargoHandlingEvent(cargo, eventType, location=None, voyage=None, completionTime=None):
+    return dropNone({CARGO: cargo, 'eventType': eventType, 'location': location, 'voyage': voyage, TIMESTAMP: completionTime})
 
-def load(location, voyage, completionTime):     return CargoHandlingEvent(LOAD, location, voyage, completionTime)
-def unload(location, voyage, completionTime):   return CargoHandlingEvent(UNLOAD, location, voyage, completionTime)
-def claim(location):                            return CargoHandlingEvent(CLAIM, location)
-def no_activity():                              return CargoHandlingEvent(NO_ACTIVITY) 
+#No need for cargo id in next activity event
+def load(location, voyage, completionTime):     return CargoHandlingEvent(None, LOAD, location, voyage, completionTime)
+def unload(location, voyage, completionTime):   return CargoHandlingEvent(None, UNLOAD, location, voyage, completionTime)
+def claim(location):                            return CargoHandlingEvent(None, CLAIM, location)
+def no_activity():                              return CargoHandlingEvent(None, NO_ACTIVITY) 

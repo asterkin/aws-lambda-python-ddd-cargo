@@ -1,7 +1,7 @@
-from matteah import *
+from mattea import *
 import unittest
 
-class TestMatteah(unittest.TestCase):
+class TestMattea(unittest.TestCase):
     def setUp(self):
         self.event = jso.jso({
             "lastEvent": {

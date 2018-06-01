@@ -9,7 +9,7 @@ module = import_module(name)
 handler = module.__dict__[name]
 sig = signature(handler)
 args = ', '.join(map(lambda p: 'inpjs.'+p, sig.parameters))
-print('from matteah.jso import jso')
+print('from mattea.jso import jso')
 print('from ' +name + ' import ' + name)
 print('def lambda_handler(input, context):')
 print('\tinpjs = jso(input)')

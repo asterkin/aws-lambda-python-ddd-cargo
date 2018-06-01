@@ -1,4 +1,5 @@
-from calculateDeliveryStatus import lambda_handler
+from calculateDeliveryStatus import calculateDeliveryStatus
+from mattea.jso import jso
 import unittest
 
 class TestDeliveryStatus(unittest.TestCase):
@@ -20,18 +21,18 @@ class TestDeliveryStatus(unittest.TestCase):
         }    
     ]
   def test_unknown(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
         "eventType": "RECEIVE"
       },
       "itinerary": []
-    }
-    self.assertEqual('UNKNOWN', lambda_handler(input, None))
+    })
+    self.assertEqual('UNKNOWN', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_ahead_of_schedule(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
@@ -39,11 +40,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537632
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('AHEAD_OF_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('AHEAD_OF_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_on_schedule(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
@@ -51,11 +52,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537633
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('ON_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('ON_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_behind_schedule(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
@@ -63,11 +64,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537635
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('BEHIND_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('BEHIND_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_misdirected(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "DEF",
         "voyage": "XYZ",
@@ -75,11 +76,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537635
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('MISDIRECTED', lambda_handler(input, None))
+    })
+    self.assertEqual('MISDIRECTED', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_load(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
@@ -87,11 +88,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537633
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('ON_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('ON_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_unload(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "DEF",
         "voyage": "XYZ",
@@ -99,11 +100,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537637
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('BEHIND_SCHEDULE',lambda_handler(input, None))
+    })
+    self.assertEqual('BEHIND_SCHEDULE',calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_customs(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "GHI",
         "voyage": "STU",
@@ -111,11 +112,11 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537632
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('AHEAD_OF_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('AHEAD_OF_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
   def test_claim(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "GHI",
         "voyage": "STU",
@@ -123,8 +124,8 @@ class TestDeliveryStatus(unittest.TestCase):
         "completionTime": 1526897537632
       },
       "itinerary": self.itinerary
-    }
-    self.assertEqual('AHEAD_OF_SCHEDULE', lambda_handler(input, None))
+    })
+    self.assertEqual('AHEAD_OF_SCHEDULE', calculateDeliveryStatus(input.lastEvent, input.itinerary))
 
 if __name__ == '__main__':
     unittest.main()

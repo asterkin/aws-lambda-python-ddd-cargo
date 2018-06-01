@@ -1,24 +1,25 @@
 all: deploy
 
 service = $(shell basename `pwd`)
-bucket = $(shell echo $(service) | tr '[:upper:]' '[:lower:]')
+bucket = mattea-cts
+prefix = $(shell echo $(service) | tr '[:upper:]' '[:lower:]')
 functions := $(patsubst ./main/%.py, %, $(filter-out ./main/$(service).py, $(wildcard ./main/*.py)))
 archives := $(patsubst %, ./dist/%.zip, $(functions))
-common = ./main/$(service).py $(wildcard ../nahash/main/*.py) $(wildcard ./main/lib/*.py)
+common = ./main/$(service).py $(wildcard ../mattea/main/mattea/*.py) $(wildcard ./main/lib/*.py)
 main := ./main
-nahash := ../nahash/main
-env = export PYTHONPATH="$(main):$(nahash)";
+mattea := ../mattea/main
+env = export PYTHONPATH="$(main):$(mattea)";
 
 test:
 	$(env) python3 -m unittest discover -p '*_test.py' -s ./test/
 
 sam: test build/$(service)-package.yaml
 
-build/$(service).yaml: $(archives) $(nahash)/samgen
-	$(env) ../nahash/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
+build/$(service).yaml: $(archives) $(mattea)/samgen
+	$(env) ../mattea/main/samgen $(service) $(basename $(functions)) > build/$(service).yaml
 
 build/$(service)-package.yaml: build/$(service).yaml
-	aws cloudformation package --template-file build/$(service).yaml --s3-bucket nahash --s3-prefix $(bucket) --output-template-file build/$(service)-package.yaml
+	aws cloudformation package --template-file build/$(service).yaml --s3-bucket $(bucket) --s3-prefix $(prefix) --output-template-file build/$(service)-package.yaml
 
 deploy: sam
 	aws cloudformation deploy \
@@ -29,12 +30,18 @@ deploy: sam
 ./dist/%.zip: ./main/%.py $(common)
 	mkdir -p dist
 	mkdir -p build
-	rm -f build/*
-	cp $< $(common) build/
-	zip -j $@ build/*
+	rm -fR build/*
+	mkdir build/mattea
+	mkdir build/lib
+	cp $< build/
+	cp ./main/$(service).py build/
+	cp ./main/lib/*.py ./build/lib/
+	cp $(mattea)/mattea/*.py ./build/mattea/	
+	$(env) ../mattea/main/make_handler $(patsubst main/%.py, %, $<) > build/lambda_handler.py
+	cd ./build; zip -r ../$@ *; cd -
 
 clean:
-	rm -f build/*
+	rm -fR build/*
 	rm -f dist/*
 	
 .PHONY: test clean

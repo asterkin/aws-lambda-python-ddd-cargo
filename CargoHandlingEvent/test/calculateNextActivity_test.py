@@ -1,10 +1,11 @@
-from calculateNextActivity import lambda_handler
+from calculateNextActivity import calculateNextActivity
+from mattea.jso import jso
 import unittest
 
 class TestDeliveryStatus(unittest.TestCase):
 
   def test_load(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "ABC",
         "voyage": "XYZ",
@@ -18,11 +19,11 @@ class TestDeliveryStatus(unittest.TestCase):
           "voyage": "XYZ"
         }
       ]
-    }
-    self.assertEqual({'eventType': 'UNLOAD', 'location': 'DEF', 'voyage': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
+    })
+    self.assertEqual({'eventType': 'UNLOAD', 'location': 'DEF', 'voyage': 'XYZ', 'completionTime': 1526897537633}, calculateNextActivity(input.lastEvent, input.itinerary))
 
   def test_unload_claim(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "DEF",
         "voyage": "XYZ",
@@ -36,11 +37,11 @@ class TestDeliveryStatus(unittest.TestCase):
           "voyage": "XYZ"
         }
       ]
-    }
-    self.assertEqual({'eventType': 'CLAIM', 'location': 'DEF'}, lambda_handler(input, None))
+    })
+    self.assertEqual({'eventType': 'CLAIM', 'location': 'DEF'}, calculateNextActivity(input.lastEvent, input.itinerary))
 
     def test_receive(self):
-      input = {
+      input = jso({
         "lastEvent": {
           "location": "DEF",
           "eventType": "RECEIVE"
@@ -52,11 +53,11 @@ class TestDeliveryStatus(unittest.TestCase):
             "voyage": "XYZ"
           }
         ]
-      }
-      self.assertEqual({'eventType': 'LOAD', 'location': 'ABC', 'voyage': 'XYZ', 'completionTime': 1526897537633}, lambda_handler(input, None))
+      })
+      self.assertEqual({'eventType': 'LOAD', 'location': 'ABC', 'voyage': 'XYZ', 'completionTime': 1526897537633}, calculateNextActivity(input.lastEvent, input.itinerary))
 
     def test_unload_load(self):
-      input = {
+      input = jso({
         "lastEvent": {
           "location": "DEF",
           "voyage": "XYZ",
@@ -75,11 +76,11 @@ class TestDeliveryStatus(unittest.TestCase):
             "voyage": "STU"
           }    
         ]
-      }
-      self.assertEqual({'eventType': 'LOAD', 'location': 'DEF', 'voyage': 'STU', 'completionTime': 1526897537633}, lambda_handler(input, None))
+      })
+      self.assertEqual({'eventType': 'LOAD', 'location': 'DEF', 'voyage': 'STU', 'completionTime': 1526897537633}, calculateNextActivity(input.lastEvent, input.itinerary))
 
   def test_no_activity(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "DEF",
         "voyage": "LMN",
@@ -98,11 +99,11 @@ class TestDeliveryStatus(unittest.TestCase):
           "voyage": "STU"
         }    
       ]
-    }
-    self.assertEqual({'eventType': 'NO_ACTIVITY'}, lambda_handler(input, None))
+    })
+    self.assertEqual({'eventType': 'NO_ACTIVITY'}, calculateNextActivity(input.lastEvent, input.itinerary))
 
   def test_customs(self):
-    input = {
+    input = jso({
       "lastEvent": {
         "location": "DEF",
         "eventType": "CUSTOMS"
@@ -120,8 +121,8 @@ class TestDeliveryStatus(unittest.TestCase):
           "voyage": "STU"
         }    
       ]
-    }
-    self.assertEqual({'eventType': 'NO_ACTIVITY'}, lambda_handler(input, None))
+    })
+    self.assertEqual({'eventType': 'NO_ACTIVITY'}, calculateNextActivity(input.lastEvent, input.itinerary))
 
 if __name__ == '__main__':
     unittest.main()

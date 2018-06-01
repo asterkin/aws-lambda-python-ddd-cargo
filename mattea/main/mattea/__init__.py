@@ -34,6 +34,7 @@ resActionTemplate = """
 """
 
 import boto3
+from botocore.exceptions import ClientError
 import os
 
 def attribute(attr):
@@ -46,30 +47,50 @@ def key(attr, keyType):
                 - AttributeName: $NAME
                   KeyType: $TYPE""".replace('$NAME', attr['name']).replace('$TYPE', keyType) if attr else ''
 
-class Repository:
-    def __init__(self, name, **kwargs):
+class Resource:
+    def __init__(self, name):
         self.name = name
-        self.hashKey  = kwargs.get('hashKey')
-        self.rangeKey = kwargs.get('rangeKey', None)
+
+def keyType(t):
+    return {
+        int : 'N',
+        str : 'S'
+    }.get(t)
+
+def keySpec(key):
+    if not key: return None
+    assert(len(key.keys()) == 1)
+    name = next(iter(key.keys()))
+    return {'name': name, 'type': keyType(key[name])}
+    
+class Repository(Resource):
+    def __init__(self, name, **kwargs):
+        Resource.__init__(self, name)
+        self.hashKey  = keySpec(kwargs.get('hashKey'))
+        self.rangeKey = keySpec(kwargs.get('rangeKey', None))
     def __str__(self):
-        return dResTemplate.replace('$NAME', self.name).replace('$ATTRIBUTES', self.attributes()).replace('$KEYS', self.keys())
+        return dbResTemplate.replace('$NAME', self.name).replace('$ATTRIBUTES', self.attributes()).replace('$KEYS', self.keys())
     def attributes(self):
         return attribute(self.hashKey) + attribute(self.rangeKey)
     def keys(self):
         return key(self.hashKey, 'HASH') + key(self.rangeKey, 'RANGE')
 
-class RepositoryClient:
+class Client:
+    def __init__(self, name):
+        self.name = name
+
+class RepositoryClient(Client):
     def __init__(self, repository, *actions):
-        self.name = repository.name
+        Client.__init__(self, repository.name)
         self.dynamodb = boto3.resource('dynamodb')
         dbname = os.getenv(self.name)
-        self.table = dynamodb.Table(dbname) if dbname else None #required for samgen
+        self.table = self.dynamodb.Table(dbname) if dbname else None #required for samgen
         self.hashKey = repository.hashKey
         self.rangeKey = repository.rangeKey
         self.actions = actions
     def __str__(self):
         return resActionsTemplate.replace('$ACTIONS', ''.join(map(lambda a: resActionTemplate
-                .replace('$ACTION', a), self.actions))).replace('$RESOURCE', self.name)
+                .replace('$ACTION', 'dynamodb:'+a), self.actions))).replace('$RESOURCE', self.name)
 
 """Helper class to convert a DynamoDB item to JSON."""
 
@@ -87,18 +108,18 @@ class DecimalEncoder(json.JSONEncoder):
 class GetClient(RepositoryClient):
     def __init__(self, repository):
         RepositoryClient.__init__(self, repository, 'GetItem')
-    def has_item(key):
+    def has_item(self, key):
         return 'Item' in self.table.get_item(Key={self.hashKay:key},ProjectionExpression=self.hashKey)
-    def get_item(key):
+    def get_item(self, key):
         res = self.table.get_item(Key={self.hashKay:key})
         return res['Item'] if 'Item' in res else None
 
 class PutClient(RepositoryClient):
     def __init__(self, repository):
         RepositoryClient.__init__(self, repository, 'PutItem')
-        self.unique = 'attribute_not_exists(%s)' % hashKey
-        if rangeKey: self.unique += 'AND attribute_not_exists(%s)' % rangeKey
-    def put_item(item, unique=True):
+        self.unique = 'attribute_not_exists(%s)' % self.hashKey['name']
+        if self.rangeKey: self.unique += 'AND attribute_not_exists(%s)' % self.rangeKey['name']
+    def put_item(self, item, unique=True):
         try:
             self.table.put_item(
                 Item = item,
@@ -110,12 +131,14 @@ class PutClient(RepositoryClient):
                 return 'DUPLICATE'
             raise
 
+from boto3.dynamodb.conditions import Key, Attr
+
 class QueryClient(RepositoryClient):
-    def __init__(self, name, hashKey, rangeKey):
-        RepositoryClient.__init__(self, name, hashKey, 'Query')
+    def __init__(self, repository):
+        RepositoryClient.__init__(self, repository, 'Query')
     def get_last(self, key):
-        result = table.query(
-            KeyConditionExpression=Key(self.hashKey).eq(key),
+        result = self.table.query(
+            KeyConditionExpression=Key(self.hashKey['name']).eq(key),
             Limit = 1,
             ScanIndexForward = False
         )['Items']

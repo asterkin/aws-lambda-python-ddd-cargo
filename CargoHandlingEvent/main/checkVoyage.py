@@ -1,6 +1,5 @@
 """Check whether Voyage reference is required and if so, is supplied."""
 
-from nahash import jso
 import CargoHandlingEvent
 
 def voyageRequired(eventType):
@@ -12,6 +11,3 @@ def checkVoyage(event):
         return'OK' if event.voyage else 'VOYAGE_REF_IS_MISSING'
     else:
         return 'OK' if not event.voyage else 'UNEXPECTED_VOYAGE_REFERENCE'
-
-def lambda_handler(input, context):
-    return checkVoyage(jso(input))

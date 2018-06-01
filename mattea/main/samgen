@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+
+import sys
+from importlib import import_module
+from mattea import Resource, Client
+
+template = """
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: %s
+Resources:
+%s
+"""
+
+funcTemplate = """
+    $NAME:
+        Type: 'AWS::Serverless::Function'
+        Properties:
+            Handler: lambda_handler.lambda_handler
+            Runtime: python3.6
+            CodeUri: ../dist/$NAME.zip
+            Description: $DOC
+            MemorySize: 128
+            Timeout: 3
+"""
+
+envTemplate = """
+            Environment:
+                Variables:$VARIABLES
+"""
+
+envRefTemplate = """
+                    $NAME: !Ref $NAME
+"""
+
+outputTemplate = """
+    $NAME:
+        Description: $DOC
+        Value: !GetAtt $NAME.Arn
+        Export:
+            Name: !Sub '${AWS::StackName}-$NAME'
+"""
+
+policyTemplate = """
+            Policies:
+                - Version: '2012-10-17'
+                  Statement:
+                    - Effect: Allow
+"""
+# resActionsTemplate = """
+#                       Action:$ACTIONS
+#                       Resource: !GetAtt $RESOURCE.Arn
+# """
+# resActionTemplate = """
+#                         - '$ACTION'
+# """
+
+
+def filterGlobals(mod, baseType):
+    return filter(lambda r: isinstance(r, baseType), map(lambda v: mod.__dict__[v], vars(mod)))
+
+# def resActions(ref):
+#     return resActionsTemplate.replace('$ACTIONS', ''.join(map(lambda a: resActionTemplate.replace('$ACTION', a), ref['ops']))).replace('$RESOURCE', ref['ref'])
+
+def policies(refs):
+    return policyTemplate + ''.join(map(lambda r: str(r), refs))
+
+def environment(refs):
+    return envTemplate.replace('$VARIABLES', ''.join(map(lambda r: envRefTemplate.replace('$NAME', r.name), refs)))
+
+def references(refs):
+    return policies(refs) + environment(refs) if len(refs) > 0 else ''
+
+def function(name):
+    mod = import_module(name)
+    doc = mod.__doc__
+    func = funcTemplate.replace('$NAME', name).replace('$DOC', doc)
+    refs = references(list(filterGlobals(mod, Client))) 
+    return (func + refs, doc)
+
+def output(name, doc):
+    return outputTemplate.replace('$NAME', name).replace('$DOC', doc)
+
+def functions(service, modules):
+    resources = ''
+    outputs = ''
+    for name in modules:
+        (res, doc) = function(name)
+        resources += res
+        outputs += output(name, doc)
+    return resources + '\nOutputs:\n' + outputs
+
+def generateTemplate(service, modules):
+    sm = import_module(service)
+    resources = ''.join(map(lambda r: str(r), filterGlobals(sm, Resource)))
+    return (template % (sm.__doc__, resources + functions(service, modules))).replace('\n\n','\n')
+
+print(generateTemplate(sys.argv[1], sys.argv[2:]))
+
+
