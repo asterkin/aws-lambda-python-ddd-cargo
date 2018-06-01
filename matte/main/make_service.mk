@@ -34,7 +34,7 @@ deploy: sam
 	mkdir build/lib
 	cp $< build/
 	cp ./main/$(service).py build/
-	cp ./main/lib/*.py ./build/lib/
+	cp ./main/lib/*.py ./build/lib/ 2>/dev/null || :
 	cp $(matte)/matte/*.py ./build/matte/	
 	$(env) ../matte/main/make_handler $(patsubst main/%.py, %, $<) > build/lambda_handler.py
 	cd ./build; zip -r ../$@ *; cd -
