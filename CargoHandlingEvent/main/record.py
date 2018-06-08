@@ -1,10 +1,9 @@
 """Store CargoHandlingEvent record in database"""
 
-from matte import PutClient
 from CargoHandlingEvent import Events, CargoHandlingEvent
 import time
 
-events = PutClient(Events)
+events = Events.put_client()
 
 #TODO: non None validation in handler
 def record(event):

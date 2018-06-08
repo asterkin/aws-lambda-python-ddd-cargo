@@ -5,7 +5,7 @@ import CargoHandlingEvent
 
 def expected_at_interim_leg(last_event, itinerary):
     leg = itinerary.find(last_event)
-    return (False, '') if leg == None else (True, leg.is_on_schedule(last_event))
+    return (True, leg.is_on_schedule(last_event)) if leg else (False, '')
 
 def expected_at_edge(last_event, leg):
     expected = leg.is_expected(last_event)

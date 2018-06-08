@@ -1,9 +1,8 @@
 """Store Cargo Itinerary."""
 
 from Cargo import Itineraries
-from matte import PutClient
 
-itineraries = PutClient(Itineraries)
+itineraries = Itineraries.put_client()
 
 def put_itinerary(cargo, schedule):
     item = { #security measure not to flush arbitrary object into DB

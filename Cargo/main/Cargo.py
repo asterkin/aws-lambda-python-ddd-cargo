@@ -1,11 +1,10 @@
 """Encapsulates Cargo Repository and all relevant computations."""
-from matte import Repository
+import matte
 
 CARGO = 'cargo'
 CARGO_KEY = {CARGO : str}
 
-#TODO: automatically infer repository name
-Cargoes = Repository('Cargo', hashKey = CARGO_KEY)
-Specifications = Repository('Specification', hashKey = CARGO_KEY)
-Itineraries = Repository('Itinerary', hashKey = CARGO_KEY)
+Cargoes = matte.repository('Cargoes', hashKey = CARGO_KEY)
+Specifications = matte.repository('Specifications', hashKey = CARGO_KEY)
+Itineraries = matte.repository('Itineraries', hashKey = CARGO_KEY)
 

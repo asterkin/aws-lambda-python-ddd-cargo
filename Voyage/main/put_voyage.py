@@ -1,9 +1,8 @@
 """Store Voyage Schedule."""
 
 from Voyage import Voyages
-from matte import PutClient
 
-voyages = PutClient(Voyages)
+voyages = Voyages.put_client()
 
 def put_voyage(voyage, schedule):
     item = {

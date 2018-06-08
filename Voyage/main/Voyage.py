@@ -1,6 +1,6 @@
 """Encapsulates Voyage and Location Repositories and all relevant computations."""
-from matte import Repository
+import matte
 
-Voyages = Repository('Voyage', hashKey = {'voyage' : str})
-Locations = Repository('Location', hashKey = {'location' : str})
+Voyages = matte.repository('Voyage', hashKey = {'voyage' : str})
+Locations = matte.repository('Location', hashKey = {'location' : str})
 

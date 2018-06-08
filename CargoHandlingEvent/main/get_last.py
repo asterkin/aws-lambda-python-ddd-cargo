@@ -1,9 +1,8 @@
 """Retrieve the most recent event for particular cargo"""
 
-from matte import QueryClient
-from CargoHandlingEvent import Events, CargoHandlingEvent
+from CargoHandlingEvent import Events
 
-events = QueryClient(Events)
+events = Events.query_client()
 
 def get_last(cargo):
     return events.get_last(cargo)

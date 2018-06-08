@@ -2,7 +2,8 @@
 
 import sys
 from importlib import import_module
-from matte import Resource, Client
+from matte.Resource import Resource
+from matte.Client import Client
 
 template = """
 AWSTemplateFormatVersion: '2010-09-09'

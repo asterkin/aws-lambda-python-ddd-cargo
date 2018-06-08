@@ -1,9 +1,8 @@
 """Store Location Definition."""
 
 from Voyage import Locations
-from matte import PutClient
 
-locations = PutClient(Locations)
+locations = Locations.put_client()
 
 def put_location(location, name):
     item = {
